@@ -22,12 +22,11 @@ export default function Dashboard() {
     setLoading(true);
 
     const payload = {
-      top_k: rowCount,
       alphas: alphaConfig,
     };
 
     try {
-      const res = await api.post("/signals/live", payload);
+      const res = await api.post(`/signals/live?top_k=${rowCount}`, payload);
       setSignals(res.data.signals);
       setDate(res.data.date);
     } catch (error) {
@@ -41,14 +40,15 @@ export default function Dashboard() {
     setLoading(true);
 
     const payload = {
-      top_k: rowCount,
       alphas: alphaConfig,
     };
 
-    const params = selectedDate ? { date: selectedDate } : {};
+    const params = selectedDate
+      ? { date: selectedDate, top_k: rowCount }
+      : { top_k: rowCount };
 
     try {
-      const res = await api.post("/signals/date?top_k=" + rowCount, payload, { params });
+      const res = await api.post("/signals/date", payload, { params });
       setSignals(res.data.signals);
       setDate(res.data.date);
     } catch (error) {

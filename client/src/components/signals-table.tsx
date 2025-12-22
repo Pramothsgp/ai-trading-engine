@@ -4,6 +4,8 @@ interface Signal {
   symbol: string;
   final_score: number;
   rank?: number;
+  current_price?: number;
+  [key: `price_${string}`]: number | undefined;
 }
 
 interface Props {
@@ -21,6 +23,21 @@ export function SignalsTable({ signals, date }: Props) {
     );
   }
 
+  // Extract price columns (current_price and price_YYYY-MM-DD columns)
+  const priceColumns = new Set<string>();
+  signals.forEach(signal => {
+    if (signal.current_price !== undefined) {
+      priceColumns.add('current_price');
+    }
+    Object.keys(signal).forEach(key => {
+      if (key.startsWith('price_')) {
+        priceColumns.add(key);
+      }
+    });
+  });
+
+  const sortedPriceColumns = Array.from(priceColumns).sort();
+
   const getTrendIcon = (score: number) => {
     if (score > 0.5) return <TrendingUp className="w-4 h-4 text-green-500" />;
     if (score < 0) return <TrendingDown className="w-4 h-4 text-red-500" />;
@@ -31,6 +48,20 @@ export function SignalsTable({ signals, date }: Props) {
     if (score > 0.5) return "text-green-600 font-semibold";
     if (score < 0) return "text-red-600 font-semibold";
     return "text-gray-600";
+  };
+
+  const formatPrice = (price: number | undefined) => {
+    if (price === undefined || price === null) return "-";
+    return `₹${price.toFixed(2)}`;
+  };
+
+  const formatColumnHeader = (column: string) => {
+    if (column === 'current_price') return 'Current Price';
+    if (column.startsWith('price_')) {
+      const dateStr = column.replace('price_', '');
+      return dateStr;
+    }
+    return column;
   };
 
   return (
@@ -68,6 +99,11 @@ export function SignalsTable({ signals, date }: Props) {
               <th className="text-center px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trend
               </th>
+              {sortedPriceColumns.map(column => (
+                <th key={column} className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {formatColumnHeader(column)}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -104,6 +140,13 @@ export function SignalsTable({ signals, date }: Props) {
                     {getTrendIcon(s.final_score)}
                   </div>
                 </td>
+                {sortedPriceColumns.map(column => (
+                  <td key={column} className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm text-gray-900 font-mono">
+                      {formatPrice(s[column])}
+                    </div>
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
