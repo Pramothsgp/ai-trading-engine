@@ -79,7 +79,7 @@ if __name__ == "__main__":
         "WIPRO",
     ]
 
-    # for s in symbols:
-        # df = fetch_data(s)
-        # df.to_csv(f"data/raw/{s}.csv")
+    for s in symbols:
+        df = fetch_data(s)
+        df.to_csv(f"data/raw/{s}.csv")
     download_nifty()
