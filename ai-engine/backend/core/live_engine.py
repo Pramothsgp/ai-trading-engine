@@ -1,7 +1,22 @@
+import math
 import pandas as pd
 from engine.alpha_engine import build_alpha_score, rank_alpha_score
 
 DATA_PATH = "data/processed/live_cross_sectional.csv"
+
+
+def clean_nan_values(records):
+    """Replace NaN/inf values with None for JSON serialization"""
+    cleaned = []
+    for record in records:
+        cleaned_record = {}
+        for key, value in record.items():
+            if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+                cleaned_record[key] = None
+            else:
+                cleaned_record[key] = value
+        cleaned.append(cleaned_record)
+    return cleaned
 
 
 def generate_live_signals(strategy, top_k, min_price=0.0, min_volume=0):
@@ -37,8 +52,8 @@ def generate_live_signals(strategy, top_k, min_price=0.0, min_volume=0):
     filename = latest.strftime("%Y-%m-%d_%H-%M-%S")
     result.to_csv(f"data/result/{filename}.csv", index=False)
 
-    # Convert result to list of dicts for API response
-    signals_with_prices = result.to_dict(orient="records")
+    # Convert result to list of dicts and clean NaN values for JSON serialization
+    signals_with_prices = clean_nan_values(result.to_dict(orient="records"))
 
     return {
         "mode": "LIVE",
@@ -131,6 +146,22 @@ def generate_date_signals(
                 for col_name, price in future_prices[symbol].items():
                     result.loc[result["symbol"] == symbol, col_name] = price
 
+        # Calculate max and min price change percentages
+        for idx, row in result.iterrows():
+            symbol = row["symbol"]
+            current_price = row["current_price"]
+
+            if symbol in future_prices and future_prices[symbol] and current_price > 0:
+                future_prices_list = list(future_prices[symbol].values())
+                max_price = max(future_prices_list)
+                min_price = min(future_prices_list)
+
+                max_change_pct = ((max_price - current_price) / current_price) * 100
+                min_change_pct = ((min_price - current_price) / current_price) * 100
+
+                result.loc[idx, "max_change_pct"] = round(max_change_pct, 2)
+                result.loc[idx, "min_change_pct"] = round(min_change_pct, 2)
+
     # Remove any Date column that might exist from previous operations
     if "Date" in result.columns:
         result = result.drop(columns=["Date"])
@@ -139,8 +170,8 @@ def generate_date_signals(
     filename = calculation_date.strftime("%Y-%m-%d_%H-%M-%S")
     result.to_csv(f"data/result/{filename}.csv", index=False)
 
-    # Convert result back to list of dicts for API response
-    signals_with_prices = result.to_dict(orient="records")
+    # Convert result to list of dicts and clean NaN values for JSON serialization
+    signals_with_prices = clean_nan_values(result.to_dict(orient="records"))
 
     return {
         "mode": "DATE",

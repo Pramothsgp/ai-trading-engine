@@ -5,6 +5,8 @@ interface Signal {
   final_score: number;
   rank?: number;
   current_price?: number;
+  max_change_pct?: number;
+  min_change_pct?: number;
   [key: `price_${string}`]: number | undefined;
 }
 
@@ -38,6 +40,22 @@ export function SignalsTable({ signals, date }: Props) {
 
   const sortedPriceColumns = Array.from(priceColumns).sort();
 
+  // Check if we have max/min change data (historical analysis)
+  const hasChangeData = signals.some((s) => s.max_change_pct !== undefined);
+
+  const formatChangePct = (value?: number) => {
+    if (value === undefined || value === null) return "-";
+    const prefix = value > 0 ? "+" : "";
+    return `${prefix}${value.toFixed(2)}%`;
+  };
+
+  const getChangeColor = (value?: number) => {
+    if (value === undefined || value === null) return "text-gray-500";
+    if (value > 0) return "text-green-600";
+    if (value < 0) return "text-red-600";
+    return "text-gray-500";
+  };
+
   const getTrendIcon = (score: number) => {
     if (score > 0.5) return <TrendingUp className="w-4 h-4 text-green-500" />;
     if (score < 0) return <TrendingDown className="w-4 h-4 text-red-500" />;
@@ -55,11 +73,21 @@ export function SignalsTable({ signals, date }: Props) {
     return `₹${price.toFixed(2)}`;
   };
 
+  const formatDate = (dateStr: string) => {
+    // Convert YYYY-MM-DD to DD/MM/YYYY
+    if (!dateStr) return dateStr;
+    const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    return dateStr;
+  };
+
   const formatColumnHeader = (column: string) => {
     if (column === "current_price") return "Current Price";
     if (column.startsWith("price_")) {
       const dateStr = column.replace("price_", "");
-      return dateStr;
+      return formatDate(dateStr);
     }
     return column;
   };
@@ -77,7 +105,9 @@ export function SignalsTable({ signals, date }: Props) {
           {date && (
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600 font-medium">{date}</span>
+              <span className="text-sm text-gray-600 font-medium">
+                {formatDate(date)}
+              </span>
             </div>
           )}
         </div>
@@ -99,6 +129,16 @@ export function SignalsTable({ signals, date }: Props) {
               <th className="text-center px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trend
               </th>
+              {hasChangeData && (
+                <>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Max ↑
+                  </th>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Min ↓
+                  </th>
+                </>
+              )}
               {sortedPriceColumns.map((column) => (
                 <th
                   key={column}
@@ -143,6 +183,28 @@ export function SignalsTable({ signals, date }: Props) {
                     {getTrendIcon(s.final_score)}
                   </div>
                 </td>
+                {hasChangeData && (
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span
+                        className={`text-sm font-mono font-semibold ${getChangeColor(
+                          s.max_change_pct
+                        )}`}
+                      >
+                        {formatChangePct(s.max_change_pct)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span
+                        className={`text-sm font-mono font-semibold ${getChangeColor(
+                          s.min_change_pct
+                        )}`}
+                      >
+                        {formatChangePct(s.min_change_pct)}
+                      </span>
+                    </td>
+                  </>
+                )}
                 {sortedPriceColumns.map((column) => (
                   <td
                     key={column}

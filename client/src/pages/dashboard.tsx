@@ -9,16 +9,26 @@ export default function Dashboard() {
   const [alphaConfig, setAlphaConfig] = useState<AlphaConfigMap>({
     ml: { enabled: true, weight: 0.4 },
     momentum: { enabled: true, weight: 0.4 },
-    breakout: { enabled: false, weight: 0.2 },
+    breakout: { enabled: true, weight: 0.2 },
   });
 
   const [signals, setSignals] = useState<any[]>([]);
   const [date, setDate] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(""); // Stored as YYYY-MM-DD for API
   const [loading, setLoading] = useState(false);
   const [rowCount, setRowCount] = useState(5);
   const [minPrice, setMinPrice] = useState(0);
   const [minVolume, setMinVolume] = useState(0);
+
+  // Convert YYYY-MM-DD to DD/MM/YYYY for display
+  const formatDateDisplay = (yyyymmdd: string): string => {
+    if (!yyyymmdd) return "";
+    const match = yyyymmdd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    return yyyymmdd;
+  };
 
   const runLive = async () => {
     setLoading(true);
@@ -28,7 +38,10 @@ export default function Dashboard() {
     };
 
     try {
-      const res = await api.post(`/signals/live?top_k=${rowCount}&min_price=${minPrice}&min_volume=${minVolume}`, payload);
+      const res = await api.post(
+        `/signals/live?top_k=${rowCount}&min_price=${minPrice}&min_volume=${minVolume}`,
+        payload
+      );
       setSignals(res.data.signals);
       setDate(res.data.date);
     } catch (error) {
@@ -46,7 +59,12 @@ export default function Dashboard() {
     };
 
     const params = selectedDate
-      ? { date: selectedDate, top_k: rowCount, min_price: minPrice, min_volume: minVolume }
+      ? {
+          date: selectedDate,
+          top_k: rowCount,
+          min_price: minPrice,
+          min_volume: minVolume,
+        }
       : { top_k: rowCount, min_price: minPrice, min_volume: minVolume };
 
     try {
@@ -91,14 +109,14 @@ export default function Dashboard() {
               value={rowCount}
               onChange={(e) =>
                 setRowCount(
-                  Math.max(1, Math.min(50, parseInt(e.target.value) || 5))
+                  Math.max(1, Math.min(200, parseInt(e.target.value) || 5))
                 )
               }
               className="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-all duration-200"
               placeholder="Rows"
             />
             <span className="text-sm text-gray-500">
-              Generate top {rowCount} trading signals (max 50)
+              Generate top {rowCount} trading signals (max 200)
             </span>
           </div>
         </div>
@@ -137,7 +155,8 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Filter stocks by minimum price and trading volume. Set to 0 to disable filters.
+            Filter stocks by minimum price and trading volume. Set to 0 to
+            disable filters.
           </p>
         </div>
 
@@ -182,14 +201,20 @@ export default function Dashboard() {
                 <Calendar className="w-4 h-4 inline mr-2" />
                 Historical Analysis (Optional)
               </label>
-              <div className="flex gap-3">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-all duration-200"
-                  placeholder="Select date"
-                />
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 relative">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-all duration-200"
+                  />
+                  {selectedDate && (
+                    <span className="absolute right-12 top-1/2 -translate-y-1/2 text-sm text-indigo-600 font-medium pointer-events-none">
+                      {formatDateDisplay(selectedDate)}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={runWithDate}
                   disabled={loading}
