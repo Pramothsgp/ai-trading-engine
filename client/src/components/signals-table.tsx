@@ -25,12 +25,12 @@ export function SignalsTable({ signals, date }: Props) {
 
   // Extract price columns (current_price and price_YYYY-MM-DD columns)
   const priceColumns = new Set<string>();
-  signals.forEach(signal => {
+  signals.forEach((signal) => {
     if (signal.current_price !== undefined) {
-      priceColumns.add('current_price');
+      priceColumns.add("current_price");
     }
-    Object.keys(signal).forEach(key => {
-      if (key.startsWith('price_')) {
+    Object.keys(signal).forEach((key) => {
+      if (key.startsWith("price_")) {
         priceColumns.add(key);
       }
     });
@@ -56,9 +56,9 @@ export function SignalsTable({ signals, date }: Props) {
   };
 
   const formatColumnHeader = (column: string) => {
-    if (column === 'current_price') return 'Current Price';
-    if (column.startsWith('price_')) {
-      const dateStr = column.replace('price_', '');
+    if (column === "current_price") return "Current Price";
+    if (column.startsWith("price_")) {
+      const dateStr = column.replace("price_", "");
       return dateStr;
     }
     return column;
@@ -99,8 +99,11 @@ export function SignalsTable({ signals, date }: Props) {
               <th className="text-center px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trend
               </th>
-              {sortedPriceColumns.map(column => (
-                <th key={column} className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {sortedPriceColumns.map((column) => (
+                <th
+                  key={column}
+                  className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   {formatColumnHeader(column)}
                 </th>
               ))}
@@ -140,10 +143,13 @@ export function SignalsTable({ signals, date }: Props) {
                     {getTrendIcon(s.final_score)}
                   </div>
                 </td>
-                {sortedPriceColumns.map(column => (
-                  <td key={column} className="px-6 py-4 whitespace-nowrap text-right">
+                {sortedPriceColumns.map((column) => (
+                  <td
+                    key={column}
+                    className="px-6 py-4 whitespace-nowrap text-right"
+                  >
                     <div className="text-sm text-gray-900 font-mono">
-                      {formatPrice(s[column])}
+                      {formatPrice(s[column as keyof typeof s] as number)}
                     </div>
                   </td>
                 ))}

@@ -4,7 +4,7 @@ from engine.alpha_engine import build_alpha_score, rank_alpha_score
 DATA_PATH = "data/processed/live_cross_sectional.csv"
 
 
-def generate_live_signals(strategy, top_k):
+def generate_live_signals(strategy, top_k, min_price=0.0, min_volume=0):
     df = pd.read_csv(DATA_PATH)
     print(len(df))
     df["Date"] = pd.to_datetime(df["Date"])
@@ -17,6 +17,13 @@ def generate_live_signals(strategy, top_k):
 
     # Get top signals with current prices from the latest available data
     latest_data = df[df["Date"] == latest]
+
+    # Apply filters
+    if min_price > 0.0:
+        latest_data = latest_data[latest_data["Close"] >= min_price]
+    if min_volume > 0:
+        latest_data = latest_data[latest_data["Volume"] >= min_volume]
+
     signals = (
         latest_data.sort_values("final_score", ascending=False)
         .head(top_k)[["symbol", "final_score", "rank", "Close"]]
@@ -40,7 +47,9 @@ def generate_live_signals(strategy, top_k):
     }
 
 
-def generate_date_signals(strategy, top_k, target_date=None):
+def generate_date_signals(
+    strategy, top_k, target_date=None, min_price=0.0, min_volume=0
+):
     df = pd.read_csv(DATA_PATH)
     print(len(df))
     df["Date"] = pd.to_datetime(df["Date"])
@@ -66,6 +75,13 @@ def generate_date_signals(strategy, top_k, target_date=None):
 
     # Get top signals from the calculation date
     calculation_data = df[df["Date"] == calculation_date]
+
+    # Apply filters
+    if min_price > 0.0:
+        calculation_data = calculation_data[calculation_data["Close"] >= min_price]
+    if min_volume > 0:
+        calculation_data = calculation_data[calculation_data["Volume"] >= min_volume]
+
     signals = (
         calculation_data.sort_values("final_score", ascending=False)
         .head(top_k)[["symbol", "final_score", "rank", "Close"]]

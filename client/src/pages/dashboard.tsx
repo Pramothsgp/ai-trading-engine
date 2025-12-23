@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [rowCount, setRowCount] = useState(5);
+  const [minPrice, setMinPrice] = useState(0);
+  const [minVolume, setMinVolume] = useState(0);
 
   const runLive = async () => {
     setLoading(true);
@@ -26,7 +28,7 @@ export default function Dashboard() {
     };
 
     try {
-      const res = await api.post(`/signals/live?top_k=${rowCount}`, payload);
+      const res = await api.post(`/signals/live?top_k=${rowCount}&min_price=${minPrice}&min_volume=${minVolume}`, payload);
       setSignals(res.data.signals);
       setDate(res.data.date);
     } catch (error) {
@@ -44,8 +46,8 @@ export default function Dashboard() {
     };
 
     const params = selectedDate
-      ? { date: selectedDate, top_k: rowCount }
-      : { top_k: rowCount };
+      ? { date: selectedDate, top_k: rowCount, min_price: minPrice, min_volume: minVolume }
+      : { top_k: rowCount, min_price: minPrice, min_volume: minVolume };
 
     try {
       const res = await api.post("/signals/date", payload, { params });
@@ -99,6 +101,44 @@ export default function Dashboard() {
               Generate top {rowCount} trading signals (max 50)
             </span>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Filters
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Minimum Price (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={minPrice}
+                onChange={(e) => setMinPrice(parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-all duration-200"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Minimum Volume
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={minVolume}
+                onChange={(e) => setMinVolume(parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-all duration-200"
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Filter stocks by minimum price and trading volume. Set to 0 to disable filters.
+          </p>
         </div>
 
         <div className="flex items-center justify-between mb-6">

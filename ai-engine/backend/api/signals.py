@@ -19,8 +19,18 @@ def generate_signals(
         ge=1,
         le=500,
     ),
+    min_price: float = Query(
+        0.0,
+        description="Minimum stock price filter",
+        ge=0.0,
+    ),
+    min_volume: int = Query(
+        0,
+        description="Minimum trading volume filter",
+        ge=0,
+    ),
 ):
-    return generate_date_signals(strategy, top_k, date)
+    return generate_date_signals(strategy, top_k, date, min_price, min_volume)
 
 
 @router.post("/live")
@@ -32,5 +42,15 @@ def live_signals(
         ge=1,
         le=500,
     ),
+    min_price: float = Query(
+        0.0,
+        description="Minimum stock price filter",
+        ge=0.0,
+    ),
+    min_volume: int = Query(
+        0,
+        description="Minimum trading volume filter",
+        ge=0,
+    ),
 ):
-    return generate_live_signals(strategy, top_k)
+    return generate_live_signals(strategy, top_k, min_price, min_volume)
