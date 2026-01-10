@@ -7,10 +7,15 @@ from data.live_feature_pipeline import build_live_features
 dfs = []
 
 for path in glob.glob("data/raw/*.csv"):
-    symbol = path.split("/")[-1].replace(".csv", "")
-    df = build_live_features(path)
-    df["symbol"] = symbol
-    dfs.append(df)
+    try:
+        symbol = path.split("/")[-1].replace(".csv", "")
+        print("Processing:", symbol)
+        df = build_live_features(path)
+        df["symbol"] = symbol
+        dfs.append(df)
+    except Exception as e:
+        print(f"Error processing {path}: {e}")
+        continue
 
 live_df = pd.concat(dfs, ignore_index=True)
 
