@@ -79,6 +79,14 @@ if __name__ == "__main__":
         "WIPRO",
     ]
 
+    url = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
+
+    # Read CSV
+    df = pd.read_csv(url)
+
+    # Extract SYMBOL column
+    symbols = df["SYMBOL"].dropna().unique().tolist()
+    
     for s in symbols:
         df = fetch_data(s)
         df.to_csv(f"data/raw/{s}.csv")
