@@ -1,0 +1,9 @@
+python-dotenv
+pandas
+pandas-ta
+xgboost
+scikit-learn
+fastapi
+uvicorn
+google-cloud-bigquery
+google-cloud-bigquery-storage

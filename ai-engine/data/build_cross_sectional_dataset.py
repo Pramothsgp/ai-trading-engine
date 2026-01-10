@@ -5,21 +5,33 @@ from features.technical import add_technical_features
 from features.market_context import add_trend_context
 from labeling.labels import create_forward_return
 import glob
+import os
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dotenv import load_dotenv
 
-all_data = []
+# Load environment variables
+load_dotenv()
 
-for path in glob.glob("data/raw/*.csv"):
+# Get number of workers from environment
+MAX_WORKERS = int(os.getenv("DATA_MAX_WORKERS", "4"))
+THREAD_SLEEP = float(os.getenv("DATA_THREAD_SLEEP", "0.1"))
+
+def process_file(path, sleep_time=0):
+    """Process a single file with optional sleep"""
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+    
     symbol = path.split("/")[-1].replace(".csv", "")
     # Handle complex CSV format with merged cells
 
-    print("Processing:", symbol)
     try:
 
         df = pd.read_csv(path, header=None)
         # Find the first row with actual date data (starts with YYYY-MM-DD)
         date_row = df[df[0].str.contains(r"\d{4}-\d{2}-\d{2}", na=False)].index
         if len(date_row) == 0:
-            continue
+            return None
         start_row = date_row[0]
 
         # Read from the first data row
@@ -41,10 +53,10 @@ for path in glob.glob("data/raw/*.csv"):
 
                 data_rows.append([date_str, close, high, low, open_price, volume])
             except (ValueError, IndexError):
-                continue
+                return None
 
         if not data_rows:
-            continue
+            return None
 
         df = pd.DataFrame(
             data_rows, columns=["Date", "Close", "High", "Low", "Open", "Volume"]
@@ -67,14 +79,41 @@ for path in glob.glob("data/raw/*.csv"):
 
         df.dropna(inplace=True)
 
-        all_data.append(df)
+        return df
     except Exception as e:
-        print(f"Error processing {path}: {e}")
-        continue
-# Combine all stocks
-final_df = pd.concat(all_data, ignore_index=True)
+        print(f"❌ Error processing {path}: {e}")
+        return None
 
-final_df.to_csv("data/processed/cross_sectional_dataset.csv", index=False)
+if __name__ == "__main__":
+    files = glob.glob("data/raw/*.csv")
+    print(f"🚀 Processing {len(files)} files with {MAX_WORKERS} workers...")
+    
+    all_data = []
+    success_count = 0
+    
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # Submit all processing tasks with staggered sleep
+        futures = {
+            executor.submit(process_file, path,THREAD_SLEEP): path 
+            for i, path in enumerate(files)
+        }
+        
+        # Process completed tasks
+        for future in as_completed(futures):
+            result = future.result()
+            if result is not None:
+                all_data.append(result)
+                success_count += 1
+                if success_count % 50 == 0:
+                    print(f"✅ Processed {success_count}/{len(files)} files...")
+    
+    print(f"\n✅ Processing complete: {success_count}/{len(files)} files")
+    
+    # Combine all stocks
+        # Combine all stocks
+    final_df = pd.concat(all_data, ignore_index=True)
 
-print("Final dataset shape:", final_df.shape)
-print(final_df.head())
+    final_df.to_csv("data/processed/cross_sectional_dataset.csv", index=False)
+
+    print("Final dataset shape:", final_df.shape)
+    print(final_df.head())

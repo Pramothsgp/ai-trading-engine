@@ -43,9 +43,9 @@ if __name__ == "__main__":
     # Clean old live snapshot
     cleanup_live_files()
 
-    # run(["python", "-m", "data.download"], "Downloading data")
+    run(["python", "-m", "data.download"], "Downloading data")
     # run(["python", "-m", "data.feature_pipeline"], "Feature engineering")
-    # run(["python", "-m", "data.label_pipeline"], "Label generation")
+    run(["python", "-m", "data.label_pipeline"], "Label generation")
     run(["python", "-m", "data.build_cross_sectional_dataset"], "Build CSD")
     run(["python", "-m", "scripts.train_ml_alpha_xgb"], "Train ML model")
     run(["python", "-m", "data.build_live_cross_sectional"], "Build LIVE CSD")
