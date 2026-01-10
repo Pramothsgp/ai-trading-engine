@@ -1,0 +1,40 @@
+# Ignore Python cache and virtual environment files
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv
+env/
+venv/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Data and results
+# data/archive/
+# data/processed/
+# data/raw/
+# data/nifty
+# data/result
+*.csv
+!receivers.csv
+*.xlsx
+*.h5
+
+# VSCode settings
+.vscode/
+
+# Mac OS metadata
+.DS_Store
+
+# General system files
+Thumbs.db
+*.log
+
+
